@@ -178,7 +178,7 @@ class SyncRequestTroughputRunner(BaseClientTest):
                                 self.requests_start_time = time.time()
                                 self.connect_time = self.requests_start_time - connect_time_start
 
-                        for _ in range(0, self.REQUEST_COUNT):
+                        for _ in range(self.REQUEST_COUNT):
                             req = Request(topic)
                             call_start_time = time.time()
                             response = client.sync_request(req, timeout=self.DEFAULT_TIMEOUT)
@@ -189,11 +189,11 @@ class SyncRequestTroughputRunner(BaseClientTest):
                                 self.response_count += 1
                                 count = self.response_count
                                 if (self.requests_end_time == 0) and \
-                                        (count == (self.THREAD_COUNT * self.REQUEST_COUNT)):
+                                            (count == (self.THREAD_COUNT * self.REQUEST_COUNT)):
                                     self.requests_end_time = time.time()
 
                             if count % 100 == 0:
-                                print(str(count) + ", " + str(time.time() - self.requests_start_time))
+                                print(f"{count}, {str(time.time() - self.requests_start_time)}")
 
                             # Calulate and track response times
                             self.cummulative_response_time = self.cummulative_response_time + response_time
@@ -203,10 +203,11 @@ class SyncRequestTroughputRunner(BaseClientTest):
                     print(ex)
                     logging.info(ex)
                     raise ex
+
             executor.execute(run)
 
             if self.THREAD_COUNT != self.response_count / self.REQUEST_COUNT:
-                print("Failed! responseCount=" + str(self.response_count))
+                print(f"Failed! responseCount={str(self.response_count)}")
             self.assertEqual(self.THREAD_COUNT, self.response_count / self.REQUEST_COUNT)
 
             server_client.unregister_service_sync(reg_info, self.DEFAULT_TIMEOUT)

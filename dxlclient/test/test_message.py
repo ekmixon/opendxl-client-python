@@ -85,7 +85,7 @@ class MessageTest(unittest.TestCase):
         self.assertTrue(isinstance(result.client_ids, list))
 
     def test_request(self):
-        reply_to_channel = "/mcafee/client/" + UuidGenerator.generate_id_as_string()
+        reply_to_channel = f"/mcafee/client/{UuidGenerator.generate_id_as_string()}"
         service_guid = UuidGenerator.generate_id_as_string()
         source_client_guid = UuidGenerator.generate_id_as_string()
         source_broker_guid = UuidGenerator.generate_id_as_string()
@@ -123,7 +123,7 @@ class MessageTest(unittest.TestCase):
         self.assertEqual(Message.MESSAGE_TYPE_REQUEST, result.message_type)
 
     def test_request_and_response(self):
-        reply_to_channel = "/mcafee/client/" + UuidGenerator.generate_id_as_string()
+        reply_to_channel = f"/mcafee/client/{UuidGenerator.generate_id_as_string()}"
         service_guid = UuidGenerator.generate_id_as_string()
         source_client_guid = UuidGenerator.generate_id_as_string()
         source_broker_guid = UuidGenerator.generate_id_as_string()

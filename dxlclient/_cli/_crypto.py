@@ -236,12 +236,13 @@ class _CertificateRequest(object):
             csr_info.dump(),
             _CRYPTO_SIGN_DIGEST
         )
-        self._req = csr.CertificationRequest({
-            "certification_request_info": csr_info,
-            "signature_algorithm": {
-                "algorithm": u"{}_rsa".format(_CRYPTO_SIGN_DIGEST)
-            },
-            "signature": csr_signature})
+        self._req = csr.CertificationRequest(
+            {
+                "certification_request_info": csr_info,
+                "signature_algorithm": {"algorithm": f"{_CRYPTO_SIGN_DIGEST}_rsa"},
+                "signature": csr_signature,
+            }
+        )
 
     def _csr_info(self, subject, public_key, sans):
         """
@@ -406,9 +407,7 @@ def validate_cert_pem(pem_text, message_on_exception=None):
             else pem_text.encode()
         object_name, _, der_bytes = pem.unarmor(pem_bytes)
         if object_name != "CERTIFICATE":
-            raise Exception(
-                "Expected CERTIFICATE type for PEM, Received: {}".format(
-                    object_name))
+            raise Exception(f"Expected CERTIFICATE type for PEM, Received: {object_name}")
         x509.Certificate.load(der_bytes)
     except Exception as ex:
         logger.error("%s. Reason: %s",

@@ -65,14 +65,14 @@ class AsyncFloodTest(BaseClientTest):
 
                 def my_response_callback(response):
                     if response.message_type == Message.MESSAGE_TYPE_ERROR:
-                        print("Received error response: " + response._error_response)
+                        print(f"Received error response: {response._error_response}")
                         with self.resp_condition:
                             self.error_count += 1
                             self.resp_condition.notify_all()
                     else:
                         with self.resp_condition:
                             if self.response_count % 10 == 0:
-                                print("Received request " + str(self.response_count))
+                                print(f"Received request {str(self.response_count)}")
                             self.response_count += 1
                             self.resp_condition.notify_all()
 
@@ -81,9 +81,9 @@ class AsyncFloodTest(BaseClientTest):
 
                 client2.add_response_callback("", callback)
 
-                for i in range(0, self.REQUEST_COUNT):
+                for i in range(self.REQUEST_COUNT):
                     if i % 100 == 0:
-                        print("Sent: " + str(i))
+                        print(f"Sent: {str(i)}")
 
                     request = Request(channel)
                     request.payload = str(i)

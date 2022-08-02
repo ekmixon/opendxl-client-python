@@ -35,9 +35,7 @@ def topic_splitter(topic):
     splitted = topic.split("/")
     if topic[-1] != "#":
         return "/".join(splitted[:-1]) + "/#"
-    if len(topic) == 2:
-        return "#"
-    return "/".join(splitted[:-2]) + "/#"
+    return "#" if len(topic) == 2 else "/".join(splitted[:-2]) + "/#"
 
 class WilcardPerformanceTest(BaseClientTest):
 
@@ -54,9 +52,9 @@ class WilcardPerformanceTest(BaseClientTest):
             with_wildcard = self.measure_performance(client, False, True)
             with_wildcard_topic_exists = self.measure_performance(client, True, True)
 
-            print("without_wildcard: " + str(without_wildcard))
-            print("with_wildcard: " + str(with_wildcard))
-            print("with_wildcard_topic_exists: " + str(with_wildcard_topic_exists))
+            print(f"without_wildcard: {str(without_wildcard)}")
+            print(f"with_wildcard: {str(with_wildcard)}")
+            print(f"with_wildcard_topic_exists: {str(with_wildcard_topic_exists)}")
 
             self.assertTrue(with_wildcard < (2 * without_wildcard))
 
@@ -67,7 +65,7 @@ class WilcardPerformanceTest(BaseClientTest):
     def measure_performance(self, client, with_wildcard, topic_exists):
         sub_count = 10000
         query_multiplier = 10
-        topic_prefix = "/topic/" + UuidGenerator.generate_id_as_string() + "/"
+        topic_prefix = f"/topic/{UuidGenerator.generate_id_as_string()}/"
         event_count = [0]
         message_ids = set()
         payload = UuidGenerator.generate_id_as_string()
@@ -83,17 +81,17 @@ class WilcardPerformanceTest(BaseClientTest):
                     message_ids.add(event.message_id)
                     message_id_condition.notify()
                     if len(message_ids) % sub_count == 0:
-                        print("Messages size: " + str(len(message_ids)))
+                        print(f"Messages size: {len(message_ids)}")
 
         callback.on_event = on_event
         client.add_event_callback("#", callback, False)
 
         if with_wildcard:
-            client.subscribe(topic_prefix + "#")
+            client.subscribe(f"{topic_prefix}#")
 
         for i in range(sub_count):
             if i % 1000 == 0:
-                print("Subscribed: " + str(i))
+                print(f"Subscribed: {str(i)}")
             client.subscribe(topic_prefix + str(i))
 
         print("Subscribed.")
@@ -101,13 +99,17 @@ class WilcardPerformanceTest(BaseClientTest):
         start_time = time.time()
 
         for j in range(sub_count * query_multiplier):
-            evt = Event(topic_prefix + str(j % sub_count + (sub_count if not topic_exists else 0)))
+            evt = Event(
+                topic_prefix
+                + str(j % sub_count + (0 if topic_exists else sub_count))
+            )
+
             evt.payload = payload
             client.send_event(evt)
 
         with message_id_condition:
             while len(message_ids) != sub_count * query_multiplier \
-                    or event_count[0] != sub_count * query_multiplier * (2 if with_wildcard and topic_exists else 1):
+                        or event_count[0] != sub_count * query_multiplier * (2 if with_wildcard and topic_exists else 1):
                 current_event = event_count[0]
                 message_id_condition.wait(5)
                 if current_event == event_count[0]:
@@ -146,14 +148,17 @@ class WilcardPerformanceTest(BaseClientTest):
             rcb = RequestCallback()
 
             def on_request(request):
-                print("## Request in service: " + request.destination_topic + ", " + str(request.message_id))
-                print("## Request in service - payload: " + request.payload)
+                print(
+                    f"## Request in service: {request.destination_topic}, {str(request.message_id)}"
+                )
+
+                print(f"## Request in service - payload: {request.payload}")
 
                 service_request_message.append(request.message_id)
                 service_request_message_receive_payload.append(request.payload)
 
                 response = Response(request)
-                response.payload = "Request response - Event payload: " + request.payload
+                response.payload = f"Request response - Event payload: {request.payload}"
                 client.send_response(response)
 
             rcb.on_request = on_request
@@ -167,8 +172,11 @@ class WilcardPerformanceTest(BaseClientTest):
             def on_response(response):
                 # Only handle the response corresponding to the event we sent
                 if response.request_message_id == evt.message_id:
-                    print("## received_response: " + response.request_message_id + ", " + response.__class__.__name__)
-                    print("## received_response_payload: " + response.payload)
+                    print(
+                        f"## received_response: {response.request_message_id}, {response.__class__.__name__}"
+                    )
+
+                    print(f"## received_response_payload: {response.payload}")
                     client_response_message_request[0] = response.request_message_id
 
             rcb.on_response = on_response
@@ -176,7 +184,7 @@ class WilcardPerformanceTest(BaseClientTest):
 
             ecb = EventCallback()
             def on_event(event):
-                print("## received event: " + event.destination_topic + ", " + event.message_id)
+                print(f"## received event: {event.destination_topic}, {event.message_id}")
                 with client_event_message_condition:
                     client_event_message.append(event.message_id)
                     client_event_message_condition.notify_all()
@@ -185,14 +193,14 @@ class WilcardPerformanceTest(BaseClientTest):
             client.add_event_callback("/test/#", ecb)
 
             # Send our event
-            print("## Sending event: " + evt.destination_topic + ", " + evt.message_id)
+            print(f"## Sending event: {evt.destination_topic}, {evt.message_id}")
             evt.payload = "Unit test payload"
             client.send_event(evt)
 
             start = time.time()
             with client_event_message_condition:
                 while (time.time() - start < max_wait) and \
-                        not client_event_message:
+                            not client_event_message:
                     client_event_message_condition.wait(max_wait)
 
             # # Make sure the service received the request properly

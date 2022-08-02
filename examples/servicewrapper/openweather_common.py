@@ -12,4 +12,4 @@ API_KEY = "<obtain key from http://openweathermap.org/appid>"
 SERVICE_NAME = "/openweathermap/service/openweathermap"
 
 # The "current weather" topic
-SERVICE_CURRENT_WEATHER_TOPIC = SERVICE_NAME + "/current"
+SERVICE_CURRENT_WEATHER_TOPIC = f"{SERVICE_NAME}/current"

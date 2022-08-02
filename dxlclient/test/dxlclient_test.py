@@ -101,7 +101,7 @@ class DxlClientTest(BaseClientTest):
 
         event_topic = UuidGenerator.generate_id_as_string()
         with self.create_client(incoming_message_thread_pool_size=
-                                thread_count) as client:
+                                    thread_count) as client:
             client.connect()
             event_callback = EventCallback()
 
@@ -114,14 +114,14 @@ class DxlClientTest(BaseClientTest):
             event_callback.on_event = on_event
             client.add_event_callback(event_topic, event_callback)
 
-            for _ in range(0, 1000):
+            for _ in range(1000):
                 evt = Event(event_topic)
                 client.send_event(evt)
 
             start = time.time()
             with thread_name_condition:
                 while (time.time() - start < max_wait) and \
-                        len(thread_name) < thread_count:
+                            len(thread_name) < thread_count:
                     thread_name_condition.wait(max_wait)
 
             self.assertEqual(thread_count, len(thread_name))

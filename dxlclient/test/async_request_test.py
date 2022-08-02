@@ -50,6 +50,7 @@ class AsyncRequestTests(BaseClientTest):
                 self.remove_outstanding_request(response.request_message_id)
                 # Notify that a response has been received (are we done yet?)
                 self.response_condition.notify_all()
+
         callback = ResponseCallback()
         callback.on_response = my_response
 
@@ -66,7 +67,7 @@ class AsyncRequestTests(BaseClientTest):
                 # Add a response callback (not channel-specific)
                 client.add_response_callback("", callback)
 
-                for _ in range(0, self.REQ_COUNT):
+                for _ in range(self.REQ_COUNT):
                     # Send a request without specifying a callback for the current request
                     req = Request(topic)
                     self.append_outstanding_request(req.message_id)

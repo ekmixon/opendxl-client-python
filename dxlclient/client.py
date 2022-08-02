@@ -196,9 +196,7 @@ def _on_log(client, userdata, level, buf):
     :return: None
     """
     del client, userdata # unused
-    if level == mqtt.MQTT_LOG_INFO:
-        logger.info("MQTT: %s", str(buf))
-    elif level == mqtt.MQTT_LOG_NOTICE:
+    if level in [mqtt.MQTT_LOG_INFO, mqtt.MQTT_LOG_NOTICE]:
         logger.info("MQTT: %s", str(buf))
     elif level == mqtt.MQTT_LOG_WARNING:
         logger.warning("MQTT: %s", str(buf))
@@ -403,7 +401,10 @@ class DxlClient(_BaseObject):
         self._client.tls_insecure_set(True)
 
         # Generate a message pool prefix
-        self._message_pool_prefix = "DxlMessagePool-" + UuidGenerator.generate_id_as_string()
+        self._message_pool_prefix = (
+            f"DxlMessagePool-{UuidGenerator.generate_id_as_string()}"
+        )
+
 
         # The thread pool for message handling
         self._thread_pool = ThreadPool(
@@ -627,7 +628,7 @@ class DxlClient(_BaseObject):
         self._thread_terminate = False
         self._loop_until_connected(connect_retries)
 
-    def _connect(self, brokers): # pylint: disable=too-many-branches
+    def _connect(self, brokers):    # pylint: disable=too-many-branches
         """
         Internal function that attempts to connect to one of the given brokers.
 
@@ -640,7 +641,7 @@ class DxlClient(_BaseObject):
         proxy = self._proxy
         proxy_addr = proxy.get("proxy_addr", None)
         proxy_port = proxy.get("proxy_port", None)
-        proxy_available = bool(proxy_addr is not None and proxy_port is not None)
+        proxy_available = proxy_addr is not None and proxy_port is not None
 
         if not proxy_available:
             logger.debug("Not using proxy for connection.")
@@ -705,9 +706,8 @@ class DxlClient(_BaseObject):
         if self._current_broker is not None:
             logger.info("Connected to broker %s",
                         self._current_broker.unique_id)
-        else:
-            if latest_ex is not None:
-                raise latest_ex  # pylint: disable=raising-bad-type
+        elif latest_ex is not None:
+            raise latest_ex  # pylint: disable=raising-bad-type
 
     def _loop_until_connected(self, connect_retries):
         # pylint: disable=too-many-branches
@@ -740,7 +740,7 @@ class DxlClient(_BaseObject):
         latest_ex = None
         latest_ex_traceback = None
 
-        while not self._thread_terminate and (connect_retries < 0 or retries >= 0):
+        while not self._thread_terminate and (retries < 0 or retries >= 0):
             if not first_attempt:
                 # Determine retry delay
                 retry_delay_max = self.config.reconnect_delay_max
@@ -842,8 +842,7 @@ class DxlClient(_BaseObject):
                 self._subscriptions.add(topic)
                 if self.connected:
                     result, mid = self._client.subscribe(topic)
-                    self._wait_for_packet_ack(result, mid,
-                                              "subscription to " + topic)
+                    self._wait_for_packet_ack(result, mid, f"subscription to {topic}")
         finally:
             logger.debug("%s(): Releasing Subscriptions lock.", DxlUtils.func_name())
             self._subscriptions_lock.release()
@@ -859,11 +858,9 @@ class DxlClient(_BaseObject):
         logger.debug("%s(): Waiting for Subscriptions lock...", DxlUtils.func_name())
         self._subscriptions_lock.acquire()
         try:
-            if topic in self._subscriptions:
-                if self.connected:
-                    result, mid = self._client.unsubscribe(topic)
-                    self._wait_for_packet_ack(result, mid,
-                                              "unsubscription to " + topic)
+            if topic in self._subscriptions and self.connected:
+                result, mid = self._client.unsubscribe(topic)
+                self._wait_for_packet_ack(result, mid, f"unsubscription to {topic}")
         finally:
             if topic in self._subscriptions:
                 self._subscriptions.remove(topic)

@@ -80,10 +80,7 @@ class Broker(_BaseObject):
 
     @unique_id.setter
     def unique_id(self, id): # pylint: disable=invalid-name, redefined-builtin
-        if id:
-            self._unique_id = id
-        else:
-            self._unique_id = ""
+        self._unique_id = id or ""
 
     @property
     def host_name(self):
@@ -134,11 +131,11 @@ class Broker(_BaseObject):
         """Returns a string representation of the broker for the purposes of logging, etc."""
         ret = "{"
         if self.unique_id:
-            ret += "Unique id: " + self.unique_id + ", "
-        ret += "Host name: " + self.host_name
+            ret += f"Unique id: {self.unique_id}, "
+        ret += f"Host name: {self.host_name}"
         if self.ip_address:
-            ret += ", IP address: " + self.ip_address
-        ret += ", Port: " + str(self.port)
+            ret += f", IP address: {self.ip_address}"
+        ret += f", Port: {str(self.port)}"
         ret += "}"
         return ret
 
@@ -179,7 +176,7 @@ class Broker(_BaseObject):
         broker.unique_id = UuidGenerator.generate_id_as_string()
 
         if protocol and protocol.lower() not in [Broker._SSL_PROTOCOL.lower(), Broker._WSS_PROTOCOL.lower()]:
-            raise MalformedBrokerUriException("Unknown protocol: " + protocol)
+            raise MalformedBrokerUriException(f"Unknown protocol: {protocol}")
 
         return broker
 
@@ -222,13 +219,14 @@ class Broker(_BaseObject):
         :rtype: str
         """
         return "{}{}{}{}{}".format(
-            "{}{}".format(self.unique_id, self._FIELD_SEPARATOR)
-            if self.unique_id else "",
+            f"{self.unique_id}{self._FIELD_SEPARATOR}" if self.unique_id else "",
             self._port,
             self._FIELD_SEPARATOR,
             self._host_name,
-            "{}{}".format(self._FIELD_SEPARATOR, self._ip_address)
-            if self.ip_address else "")
+            f"{self._FIELD_SEPARATOR}{self._ip_address}"
+            if self.ip_address
+            else "",
+        )
 
     def _connect_to_broker(self, **proxy):
         """
@@ -239,9 +237,9 @@ class Broker(_BaseObject):
         :return: None
         """
         broker_s = None
-        proxy_addr = proxy.get("proxy_addr", None)
-        proxy_port = proxy.get("proxy_port", None)
-        proxy_available = bool(proxy_addr is not None and proxy_port is not None)
+        proxy_addr = proxy.get("proxy_addr")
+        proxy_port = proxy.get("proxy_port")
+        proxy_available = proxy_addr is not None and proxy_port is not None
         try:
             start = datetime.datetime.now()
             if proxy_available:

@@ -39,7 +39,7 @@ class RegisterServiceClientTest(BaseClientTest):
             try:
                 client.send_response(response)
             except DxlException as ex:
-                print("Failed to send response" + str(ex))
+                print(f"Failed to send response{str(ex)}")
 
         request_callback.on_request = on_request
 
@@ -87,9 +87,8 @@ class RegisterServiceClientTest(BaseClientTest):
     def wait_info_registered_state(self, new_register_state):
         start = time.time()
         while (self.info_registered != new_register_state) and \
-                (time.time() - start < self.REG_DELAY):
-            if self.info_registered != new_register_state:
-                time.sleep(0.1)
+                    (time.time() - start < self.REG_DELAY):
+            time.sleep(0.1)
         return self.info_registered
 
     def wait_info_registered(self):
@@ -189,7 +188,7 @@ class RegisterServiceClientTest(BaseClientTest):
         # calls and processing of incoming messages do not produce deadlocks.
         with self.create_client(self.DEFAULT_RETRIES, 2) as client:
             expected_second_service_response_payload = \
-                "Second service request okay too"
+                    "Second service request okay too"
             second_service_callback = RequestCallback()
 
             def on_second_service_request(request):
@@ -198,7 +197,7 @@ class RegisterServiceClientTest(BaseClientTest):
                 try:
                     client.send_response(response)
                 except DxlException as ex:
-                    print("Failed to send response" + str(ex))
+                    print(f"Failed to send response{str(ex)}")
 
             second_service_callback.on_request = on_second_service_request
 
@@ -231,13 +230,15 @@ class RegisterServiceClientTest(BaseClientTest):
             client.register_service_sync(self.info, self.REG_DELAY)
 
             first_service_request = Request(
-                "/mcafee/service/JTI/file/reputation/" + self.info.service_id)
+                f"/mcafee/service/JTI/file/reputation/{self.info.service_id}"
+            )
+
             first_service_request.payload = "Test"
 
             first_service_response = client.sync_request(
                 first_service_request, self.POST_OP_DELAY)
             first_service_response_payload = first_service_response. \
-                payload.decode("utf8")
+                    payload.decode("utf8")
             logging.info("First service response payload: %s",
                          first_service_response_payload)
 
@@ -251,7 +252,7 @@ class RegisterServiceClientTest(BaseClientTest):
             second_service_response = client.sync_request(
                 second_service_request, self.POST_OP_DELAY)
             actual_second_service_response_payload = second_service_response. \
-                payload.decode("utf8")
+                    payload.decode("utf8")
             logging.info("Second service response payload: %s",
                          actual_second_service_response_payload)
 

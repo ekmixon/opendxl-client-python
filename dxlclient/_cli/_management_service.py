@@ -38,7 +38,7 @@ class ManagementService(object):
         """
         self._host = host
         self._port = port
-        self._base_url = "https://{}:{}/remote".format(host, port)
+        self._base_url = f"https://{host}:{port}/remote"
         self._port = port
         self._auth = HTTPBasicAuth(username, password)
         self._session = requests.Session()
@@ -56,8 +56,7 @@ class ManagementService(object):
         """
         params = params if params is not None else {}
         params[":output"] = "json"
-        request_target = "{}:{}/{}".format(self._host, self._port,
-                                           command_name)
+        request_target = f"{self._host}:{self._port}/{command_name}"
         return self._parse_response(self._send_request(command_name, params),
                                     request_target)
 
@@ -71,7 +70,7 @@ class ManagementService(object):
         :return: the response object from Management Service
         :rtype: requests.Response
         """
-        _request_url = "{}/{}".format(self._base_url, command_name)
+        _request_url = f"{self._base_url}/{command_name}"
         logger.debug("Invoking request %s with the following parameters:",
                      _request_url)
         logger.debug(params)
@@ -105,8 +104,9 @@ class ManagementService(object):
         logger.debug("Response: %s", response_body)
         if status_code != 200:
             raise Exception(
-                "Request to {} failed with HTTP error code: {}. Reason: {}".
-                format(request_target, status_code, response.reason))
+                f"Request to {request_target} failed with HTTP error code: {status_code}. Reason: {response.reason}"
+            )
+
 
         if ":" not in response_body:
             raise Exception(
@@ -118,7 +118,8 @@ class ManagementService(object):
 
         if status != "OK":
             raise Exception(
-                "Request to {} failed with status: {}. Message: {}".format(
-                    request_target, status.strip(), response_detail))
+                f"Request to {request_target} failed with status: {status.strip()}. Message: {response_detail}"
+            )
+
 
         return json.loads(response_detail)

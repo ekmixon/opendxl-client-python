@@ -38,7 +38,7 @@ class BrokerTest(unittest.TestCase):
     ])
     @raises(MalformedBrokerUriException)
     def test_parse_string_with_invalid_port_raises_exception(self, unique_id):
-        self.broker._parse(unique_id + "b; [c] ")
+        self.broker._parse(f"{unique_id}b; [c] ")
 
     @parameterized.expand([
         ("",),
@@ -46,7 +46,7 @@ class BrokerTest(unittest.TestCase):
     ])
     @raises(MalformedBrokerUriException)
     def test_parse_string_without_hostname_raises_exception(self, unique_id):
-        self.broker._parse(unique_id + "b")
+        self.broker._parse(f"{unique_id}b")
 
     @parameterized.expand([
         ("",),
@@ -54,7 +54,7 @@ class BrokerTest(unittest.TestCase):
     ])
     @raises(MalformedBrokerUriException)
     def test_parse_string_with_empty_hostname_raises_exception(self, unique_id):
-        self.broker._parse(unique_id + "b;")
+        self.broker._parse(f"{unique_id}b;")
 
     @parameterized.expand([
         ("",),
@@ -62,7 +62,7 @@ class BrokerTest(unittest.TestCase):
     ])
     @raises(MalformedBrokerUriException)
     def test_parse_string_with_port_out_of_range_raises_exception(self, unique_id):
-        self.broker._parse(unique_id + "65536; [c] ")
+        self.broker._parse(f"{unique_id}65536; [c] ")
 
     def test_parse_string_valid_with_unique_id_but_no_ip_address(self):
         self.broker._parse("a ; 8883; [c] ")

@@ -17,7 +17,7 @@ from dxlclient.client_config import DxlClientConfig
 from dxlclient.message import Event
 
 # Import common logging and configuration
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
+sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/..")
 from common import *
 
 # Configure local logger
@@ -54,7 +54,7 @@ with DxlClient(config) as client:
         def on_event(self, event):
             with event_count_condition:
                 # Print the payload for the received event
-                print("Received event: " + event.payload.decode())
+                print(f"Received event: {event.payload.decode()}")
                 # Increment the count
                 event_count[0] += 1
                 # Notify that the count was increment

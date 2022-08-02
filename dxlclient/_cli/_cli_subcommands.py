@@ -92,15 +92,14 @@ def _get_value_from_prompt(title, confirm=False):
     """
     while True:
         while True:
-            value = getpass.getpass("Enter {}:".format(title))
+            value = getpass.getpass(f"Enter {title}:")
             if not value:
                 print("Value cannot be empty. Try again.")
             else:
                 break
-        confirm_value = getpass.getpass("Confirm {}:".format(title)) \
-            if confirm else value
+        confirm_value = getpass.getpass(f"Confirm {title}:") if confirm else value
         if value != confirm_value:
-            print("Values for {} do not match. Try again.".format(title))
+            print(f"Values for {title} do not match. Try again.")
         else:
             break
     return value
@@ -295,7 +294,7 @@ def _cert_filename(file_prefix):
     :return: certificate file name
     :rtype: str
     """
-    return file_prefix + ".crt"
+    return f"{file_prefix}.crt"
 
 
 def _csr_filename(file_prefix):
@@ -308,7 +307,7 @@ def _csr_filename(file_prefix):
     :return: certificate signing request file name
     :rtype: str
     """
-    return file_prefix + ".csr"
+    return f"{file_prefix}.csr"
 
 
 def _private_key_filename(file_prefix):
@@ -320,7 +319,7 @@ def _private_key_filename(file_prefix):
     :return: private key filename
     :rtype: str
     """
-    return file_prefix + ".key"
+    return f"{file_prefix}.key"
 
 
 def generate_csr_and_private_key(common_name, private_key_filename, args):
@@ -551,12 +550,12 @@ class ProvisionDxlClientSubcommand(Subcommand):  # pylint: disable=no-init
                              broker_value, ex)
                 raise
             if not broker.unique_id:
-                raise Exception("No guid for broker: {}".format(broker_value))
+                raise Exception(f"No guid for broker: {broker_value}")
             if broker.unique_id != broker_key:
-                raise Exception("{}{}{}{}. Broker line: {}".format(
-                    "guid for broker key ", broker_key,
-                    " did not match guid for broker value: ",
-                    broker.unique_id, broker_line))
+                raise Exception(
+                    f"guid for broker key {broker_key} did not match guid for broker value: {broker.unique_id}. Broker line: {broker_line}"
+                )
+
             brokers.append(broker)
         return brokers
 
@@ -580,8 +579,9 @@ class ProvisionDxlClientSubcommand(Subcommand):  # pylint: disable=no-init
             cert_request_file = args.common_or_csrfile_name
             if not os.path.isfile(cert_request_file):
                 raise Exception(
-                    "Unable to locate certificate request file: {}".format(
-                        cert_request_file))
+                    f"Unable to locate certificate request file: {cert_request_file}"
+                )
+
             with open(cert_request_file, "r") as file_hnd:
                 csr_as_string = file_hnd.read()
         else:
@@ -604,8 +604,7 @@ class ProvisionDxlClientSubcommand(Subcommand):  # pylint: disable=no-init
         :raise Exception: if the contents of `pem` does not appear to be a PEM
             wrapping a valid ASN.1-encoded certificate
         """
-        validate_cert_pem(pem, "Failed to process PEM for {}".format(
-            description))
+        validate_cert_pem(pem, f"Failed to process PEM for {description}")
         logger.info("Saving %s file to %s", description, target_file)
         DxlUtils.save_to_file(target_file, pem)
 
@@ -625,9 +624,10 @@ class ProvisionDxlClientSubcommand(Subcommand):  # pylint: disable=no-init
             {"csrString": csr_as_string}).split(",")
 
         if len(data_responses) < 3:
-            raise Exception("{} Expected {}, Received {}. Value: {}".format(
-                "Did not receive expected number of response elements.",
-                3, len(data_responses), data_responses))
+            raise Exception(
+                f"Did not receive expected number of response elements. Expected 3, Received {len(data_responses)}. Value: {data_responses}"
+            )
+
 
         brokers = self._brokers_for_config(data_responses[2].splitlines())
 
@@ -800,8 +800,7 @@ class UpdateConfigSubcommand(Subcommand):  # pylint: disable=no-init
                                      broker["guid"],
                                      broker["ipAddress"],
                                      broker["port"]) for broker in brokers]
-            websocket_brokers = response_dict.get("webSocketBrokers")
-            if websocket_brokers:
+            if websocket_brokers := response_dict.get("webSocketBrokers"):
                 config.websocket_brokers = [Broker(broker["hostName"],
                                                    broker["guid"],
                                                    broker["ipAddress"],
@@ -818,8 +817,7 @@ class UpdateConfigSubcommand(Subcommand):  # pylint: disable=no-init
         config_file = os.path.join(args.config_dir, _DXL_CONFIG_FILE_NAME)
 
         if not os.path.isfile(config_file):
-            raise Exception("Unable to find config file to update: {}".format(
-                config_file))
+            raise Exception(f"Unable to find config file to update: {config_file}")
 
         dxlconfig = DxlClientConfig.create_dxl_config_from_file(config_file)
         svc = ManagementService(args.host, args.port, args.user, args.password,

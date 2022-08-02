@@ -44,7 +44,7 @@ class AsyncCallbackTimeoutTest(BaseClientTest):
             async_req = Request(destination_topic=req_topic)
             client.async_request(async_req, callback)  # TODO: Use the method with timeout when is will available
 
-            for _ in range(0, 10):
+            for _ in range(10):
                 req = Request(destination_topic=req_topic)
                 client.async_request(req, callback)  # TODO: Use the updated method with timeout when it is available
 
@@ -53,8 +53,8 @@ class AsyncCallbackTimeoutTest(BaseClientTest):
             async_callback_count = client._get_async_callback_count()
             self.assertEqual(11, async_callback_count)
 
-            for _ in range(0, 20):
-                print("asyncCallbackCount = " + str(client._get_async_callback_count()))
+            for _ in range(20):
+                print(f"asyncCallbackCount = {str(client._get_async_callback_count())}")
                 time.sleep(1)
                 req = Request(destination_topic=req_topic)
                 client.async_request(req, callback)

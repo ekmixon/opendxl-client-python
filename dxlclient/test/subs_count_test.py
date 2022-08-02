@@ -32,14 +32,14 @@ class SubsCountTest(BaseClientTest):
 
             random1 = UuidGenerator.generate_id_as_string()
             random2 = UuidGenerator.generate_id_as_string()
-            topic1 = "/foo/bar/" + random1 + "/" + random2
+            topic1 = f"/foo/bar/{random1}/{random2}"
             clients[0].subscribe(topic1)
             clients[1].subscribe(topic1)
             clients[2].subscribe(topic1)
-            clients[3].subscribe("/foo/bar/" + random1 + "/#")
-            clients[4].subscribe("/foo/+/" + random1 + "/#")
+            clients[3].subscribe(f"/foo/bar/{random1}/#")
+            clients[4].subscribe(f"/foo/+/{random1}/#")
 
-            topic2 = "/foo/baz/" + random2
+            topic2 = f"/foo/baz/{random2}"
             clients[1].subscribe(topic2)
             clients[2].subscribe(topic2)
             clients[5].subscribe("#")
@@ -55,7 +55,7 @@ class SubsCountTest(BaseClientTest):
                 topic_count = get_subs_count(topic)
                 start = time.time()
                 while topic_count != expected_topic_count and \
-                        time.time() - start < self.MAX_TIME:
+                            time.time() - start < self.MAX_TIME:
                     time.sleep(0.1)
                     topic_count = get_subs_count(topic)
                 return topic_count

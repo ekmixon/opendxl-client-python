@@ -13,7 +13,7 @@ from dxlclient.client_config import DxlClientConfig
 from dxlclient.message import Message, Request
 
 # Import common logging and configuration
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
+sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/..")
 from common import *
 
 # Configure local logger
@@ -52,20 +52,19 @@ def execute_mar_search_api(client, payload_dict):
         # Display the response
         print("Response:\n" + json.dumps(resp_dict, sort_keys=True,
                                          indent=4, separators=(',', ': ')))
-        if "code" in resp_dict:
-            code = resp_dict['code']
-            if code < 200 or code >= 300:
-                if "body" in resp_dict and "applicationErrorList" in resp_dict["body"]:
-                    error = resp_dict["body"]["applicationErrorList"][0]
-                    raise Exception(error["message"] + ": " + str(error["code"]))
-                if "body" in resp_dict:
-                    raise Exception(resp_dict["body"] + ": " + str(code))
-                raise Exception("Error: Received failure response code: " + str(code))
-        else:
+        if "code" not in resp_dict:
             raise Exception("Error: unable to find response code")
+        code = resp_dict['code']
+        if code < 200 or code >= 300:
+            if "body" in resp_dict and "applicationErrorList" in resp_dict["body"]:
+                error = resp_dict["body"]["applicationErrorList"][0]
+                raise Exception(error["message"] + ": " + str(error["code"]))
+            if "body" in resp_dict:
+                raise Exception(resp_dict["body"] + ": " + str(code))
+            raise Exception(f"Error: Received failure response code: {str(code)}")
         return resp_dict
 
-    raise Exception("Error: " + res.error_message + " (" + str(res.error_code) + ")")
+    raise Exception(f"Error: {res.error_message} ({str(res.error_code)})")
 
 # Create the client
 with DxlClient(config) as client:
@@ -99,12 +98,13 @@ with DxlClient(config) as client:
     execute_mar_search_api(
         client,
         {
-            "target": "/v1/" + search_id + "/start",
+            "target": f"/v1/{search_id}/start",
             "method": "PUT",
             "parameters": {},
-            "body": {}
-        }
+            "body": {},
+        },
     )
+
 
     # Wait until the search finishes
     finished = False
@@ -112,12 +112,13 @@ with DxlClient(config) as client:
         response_dict = execute_mar_search_api(
             client,
             {
-                "target": "/v1/" + search_id + "/status",
+                "target": f"/v1/{search_id}/status",
                 "method": "GET",
                 "parameters": {},
-                "body": {}
-            }
+                "body": {},
+            },
         )
+
         finished = response_dict["body"]["status"] == "FINISHED"
         if not finished:
             time.sleep(5)
@@ -127,18 +128,19 @@ with DxlClient(config) as client:
     response_dict = execute_mar_search_api(
         client,
         {
-            "target": "/v1/" + search_id + "/results",
+            "target": f"/v1/{search_id}/results",
             "method": "GET",
             "parameters": {
                 "$offset": 0,
                 "$limit": 10,
                 "filter": "",
                 "sortBy": "count",
-                "sortDirection": "desc"
+                "sortDirection": "desc",
             },
-            "body": {}
-        }
+            "body": {},
+        },
     )
+
 
     # Loop and display the results
     print("Results:")

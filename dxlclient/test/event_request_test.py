@@ -58,7 +58,7 @@ class EventTests(BaseClientTest):
 
                 client.add_event_callback(topic, callback)
 
-                for _ in range(0, self.EVENT_COUNT):
+                for _ in range(self.EVENT_COUNT):
                     event = Event(topic)
                     self.append_outstanding_event(event.message_id)
                     client.send_event(event)

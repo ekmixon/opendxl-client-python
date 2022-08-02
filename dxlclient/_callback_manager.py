@@ -42,7 +42,7 @@ class _CallbackManager(_BaseObject):
         # Is wildcarding enabled
         self.wildcarding_enabled = False
 
-    def validate_callback(self, callback):  # pylint: disable=no-self-use
+    def validate_callback(self, callback):    # pylint: disable=no-self-use
         """
         Validates if `callback` is a valid MessageCallback.
 
@@ -54,10 +54,8 @@ class _CallbackManager(_BaseObject):
         if inspect.isclass(callback):
             if not issubclass(callback, MessageCallback):
                 raise ValueError("Type mismatch on callback argument")
-        # Not a class, but an instance
-        else:
-            if not issubclass(callback.__class__, MessageCallback):
-                raise ValueError("Type mismatch on callback argument")
+        elif not issubclass(callback.__class__, MessageCallback):
+            raise ValueError("Type mismatch on callback argument")
 
     def _get_callbacks_by_channel_copy(self):
         """
@@ -103,7 +101,7 @@ class _CallbackManager(_BaseObject):
             callbacks = callbacks_by_channel.get(channel)
             if callbacks is None:
                 callbacks = []
-            if not callback in callbacks:
+            if callback not in callbacks:
                 callbacks.append(callback)
                 callbacks_by_channel[channel] = callbacks
                 rc = True  # pylint: disable=invalid-name
@@ -228,10 +226,8 @@ class _RequestCallbackManager(_CallbackManager):
         if inspect.isclass(callback):
             if not issubclass(callback, RequestCallback):
                 raise ValueError("Type mismatch on callback argument")
-        # Not a class, but an instance
-        else:
-            if not issubclass(callback.__class__, RequestCallback):
-                raise ValueError("Type mismatch on callback argument")
+        elif not issubclass(callback.__class__, RequestCallback):
+            raise ValueError("Type mismatch on callback argument")
 
     def handle_fire(self, request_callback, request):
         # pylint: disable=arguments-differ
@@ -266,10 +262,8 @@ class _ResponseCallbackManager(_CallbackManager):
         if inspect.isclass(callback):
             if not issubclass(callback, ResponseCallback):
                 raise ValueError("Type mismatch on callback argument")
-        # Not a class, but an instance
-        else:
-            if not issubclass(callback.__class__, ResponseCallback):
-                raise ValueError("Type mismatch on callback argument")
+        elif not issubclass(callback.__class__, ResponseCallback):
+            raise ValueError("Type mismatch on callback argument")
 
     def handle_fire(self, response_callback, response):
         # pylint: disable=arguments-differ
@@ -304,10 +298,8 @@ class _EventCallbackManager(_CallbackManager):
         if inspect.isclass(callback):
             if not issubclass(callback, EventCallback):
                 raise ValueError("Type mismatch on callback argument")
-        # Not a class, but an instance
-        else:
-            if not issubclass(callback.__class__, EventCallback):
-                raise ValueError("Type mismatch on callback argument")
+        elif not issubclass(callback.__class__, EventCallback):
+            raise ValueError("Type mismatch on callback argument")
 
     def handle_fire(self, event_callback, event):
         # pylint: disable=arguments-differ

@@ -14,7 +14,7 @@ from dxlclient.message import Message, Request, Response
 from dxlclient.service import ServiceRegistrationInfo
 
 # Import common logging and configuration
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
+sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/..")
 from common import *
 
 # Configure local logger
@@ -41,7 +41,7 @@ with DxlClient(config) as client:
     class MyRequestCallback(RequestCallback):
         def on_request(self, request):
             # Extract information from request
-            print("Service received request payload: " + request.payload.decode())
+            print(f"Service received request payload: {request.payload.decode()}")
             # Create the response message
             res = Response(request)
             # Populate the response payload

@@ -9,7 +9,7 @@ from dxlclient.client import DxlClient
 from dxlclient.client_config import DxlClientConfig
 
 # Import common logging and configuration
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
+sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/..")
 from common import *
 
 # Configure local logger

@@ -15,7 +15,7 @@ from dxlclient.client_config import DxlClientConfig
 from dxlclient.message import Message, Request
 
 # Import common logging and configuration
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
+sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/..")
 from common import *
 
 # Configure local logger
@@ -68,7 +68,7 @@ def get_tie_file_reputation(client, md5_hex, sha1_hex):
     # Return a dictionary corresponding to the response payload
     if res.message_type != Message.MESSAGE_TYPE_ERROR:
         return json.loads(res.payload.decode(encoding="UTF-8"))
-    raise Exception("Error: " + res.error_message + " (" + str(res.error_code) + ")")
+    raise Exception(f"Error: {res.error_message} ({str(res.error_code)})")
 
 # Create the client
 with DxlClient(config) as client:

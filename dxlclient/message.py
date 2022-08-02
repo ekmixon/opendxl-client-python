@@ -378,7 +378,7 @@ class Message(ABCMeta('ABC', (_BaseObject,), {'__slots__': ()})): # compatible m
                 message._unpack_message_v2(unpacker)
             return message
 
-        raise DxlException("Unknown message type: " + message_type)
+        raise DxlException(f"Unknown message type: {message_type}")
 
     @staticmethod
     def _decode_to_unicode_string(obj):

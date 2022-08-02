@@ -374,8 +374,7 @@ class _ServiceRegistrationHandler(_BaseObject):
         """
         with self._destroy_lock:
             if not self._destroyed:
-                info = self.service
-                if info:
+                if info := self.service:
                     for channel, callbacks in iter_dict_items(info._callbacks_by_topic):
                         for callback in callbacks:
                             self.request_callbacks.remove_callback(channel, callback)
@@ -398,8 +397,7 @@ class _ServiceRegistrationHandler(_BaseObject):
             response = self.client.sync_request(req, timeout=10)
             if response.message_type != Message.MESSAGE_TYPE_ERROR:
                 self.update_register_time()
-                info = self.service
-                if info:
+                if info := self.service:
                     info._notify_registration_succeeded()
             else:
                 # TODO: Notify the client with an exception if an error occurred, so that it doesn't wait for timeout
@@ -418,21 +416,20 @@ class _ServiceRegistrationHandler(_BaseObject):
             current_time = int(time.time())
             last_register_time = self.get_register_time()
 
-            if last_register_time > 0 and (current_time - last_register_time) <= (self.ttl * 60):
-                request = Request(destination_topic=_ServiceManager.DXL_SERVICE_UNREGISTER_REQUEST_CHANNEL)
-                request.payload = self.json_unregister_service()
-                response = self.client.sync_request(request, timeout=60)
-                if response.message_type == Message.MESSAGE_TYPE_ERROR:
-                    raise DxlException("Unregister service request timed out")
-            else:
-                if last_register_time > 0:
+            if last_register_time > 0:
+                if current_time - last_register_time <= self.ttl * 60:
+                    request = Request(destination_topic=_ServiceManager.DXL_SERVICE_UNREGISTER_REQUEST_CHANNEL)
+                    request.payload = self.json_unregister_service()
+                    response = self.client.sync_request(request, timeout=60)
+                    if response.message_type == Message.MESSAGE_TYPE_ERROR:
+                        raise DxlException("Unregister service request timed out")
+                else:
                     # pylint: disable=logging-not-lazy
                     logger.info(
                         "TTL expired, unregister service event omitted for " +
                         self.service_type + " (" + self.instance_id +
                         ")")
-            info = self.service
-            if info:
+            if info := self.service:
                 info._notify_unregistration_succeeded()
 
     def get_register_time(self):
@@ -484,9 +481,8 @@ class _ServiceRegistrationHandler(_BaseObject):
                     self.ttl_timer = Timer(self.ttl * 60, self._timer_callback)
                     self.ttl_timer.daemon = True
                     self.ttl_timer.start()
-        else:
-            if self.ttl_timer:
-                self.ttl_timer.cancel()
+        elif self.ttl_timer:
+            self.ttl_timer.cancel()
 
     def start_timer(self):
         """
@@ -624,7 +620,7 @@ class _ServiceManager(RequestCallback):
         with self.lock:
             service_handler = self.services.get(service_id, None)
             if not service_handler:
-                raise DxlException("Service instance ID unknown: " + str(service_id))
+                raise DxlException(f"Service instance ID unknown: {str(service_id)}")
 
             service_handler.stop_timer()
 
@@ -665,19 +661,17 @@ class _ServiceManager(RequestCallback):
         # self.callbacks_by_channel is reassigned after the lock is released
         # that no concurrent modification errors are encountered.
         services = self.services
-        service_instance_id = request.service_id
-        if not service_instance_id:
-            for service_id in services:
-                self._on_request(services[service_id], request)
-        else:
-            service_registration_handler = services.get(service_instance_id)
-            if service_registration_handler:
+        if service_instance_id := request.service_id:
+            if service_registration_handler := services.get(service_instance_id):
                 self._on_request(service_registration_handler, request)
             else:
                 logger.warning(
                     "No service with GUID %s registered. Ignoring request.",
                     service_instance_id)
                 self.send_service_not_found_error_message(request)
+        else:
+            for service_id in services:
+                self._on_request(services[service_id], request)
 
     def send_service_not_found_error_message(self, request):
         """

@@ -31,7 +31,7 @@ from dxlclient.service import ServiceRegistrationInfo
 from openweather_common import *
 
 # Import common logging and configuration
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
+sys.path.append(f"{os.path.dirname(os.path.abspath(__file__))}/..")
 from common import *
 
 # Configure local logger
@@ -60,7 +60,7 @@ with DxlClient(config) as client:
             try:
                 # Extract information from request
                 query = request.payload.decode(encoding="UTF-8")
-                logger.info("Service received request payload: " + query)
+                logger.info(f"Service received request payload: {query}")
 
                 # Send HTTP request to OpenWeatherMap
                 req = URLRequest(
@@ -78,7 +78,7 @@ with DxlClient(config) as client:
                 client.send_response(response)
 
             except Exception as ex:
-                print(str(ex))
+                print(ex)
                 # Send error response
                 client.send_response(ErrorResponse(
                     request, error_message=str(ex).encode(encoding="UTF-8")))

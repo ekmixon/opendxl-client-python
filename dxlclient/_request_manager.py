@@ -71,7 +71,7 @@ class RequestManager(ResponseCallback):
         :return: None
         """
         with self.current_request_message_lock:
-            if not message_id in self.current_request_message_ids:
+            if message_id not in self.current_request_message_ids:
                 self.current_request_message_ids.add(message_id)
 
     def remove_current_request(self, message_id):
@@ -124,7 +124,7 @@ class RequestManager(ResponseCallback):
         :return: None
         """
         destination = request.destination_topic
-        if not response_callback is None:
+        if response_callback is not None:
             self.register_async_callback(request, response_callback)
         try:
             # Add to set of current requests
@@ -132,7 +132,7 @@ class RequestManager(ResponseCallback):
             self.client._send_request(request)
         except Exception:
             try:
-                if not response_callback is None:
+                if response_callback is not None:
                     self.unregister_async_callback(destination)
             finally:
                 self.remove_current_request(request.message_id)
@@ -208,10 +208,13 @@ class RequestManager(ResponseCallback):
             wait_seconds = wait
             wait_start = time.time()
 
-            while not message_id in self.sync_wait_message_responses:
+            while message_id not in self.sync_wait_message_responses:
                 self.sync_wait_message_condition.wait(wait_seconds)
                 if (time.time() - wait_start) >= wait_seconds:
-                    raise WaitTimeoutException("Timeout waiting for response to message: " + message_id)
+                    raise WaitTimeoutException(
+                        f"Timeout waiting for response to message: {message_id}"
+                    )
+
 
             response = self.sync_wait_message_responses[message_id]
             del self.sync_wait_message_responses[message_id]
@@ -233,7 +236,7 @@ class RequestManager(ResponseCallback):
 
             # Check for asynchronous callbacks
             callback = self.unregister_async_callback(request_message_id)
-            if not callback is None:
+            if callback is not None:
                 callback.on_response(response)
         finally:
             # Remove from set of current requests

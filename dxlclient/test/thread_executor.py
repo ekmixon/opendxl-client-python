@@ -19,5 +19,5 @@ class ThreadRunExecutor(object):
 
     def execute(self, command):
         with self.executor as executor:
-            for _ in range(0, self.run_count):
+            for _ in range(self.run_count):
                 self.futures.append(executor.submit(command))

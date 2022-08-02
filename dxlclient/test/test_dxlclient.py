@@ -234,17 +234,21 @@ class DxlClientConfigTest(unittest.TestCase):
             self._bytes_captured = bytes_to_write
 
     def test_write_in_memory_config(self):
-        expected_data = os.linesep.join([
-            "[Certs]",
-            "BrokerCertChain = mycabundle.pem",
-            "CertFile = mycertfile.pem",
-            "PrivateKey = myprivatekey.pem",
-            "{}[Brokers]".format(os.linesep),
-            "myid1 = myid1;8001;myhost1;10.10.100.1",
-            "myid2 = myid2;8002;myhost2;10.10.100.2{}".format(os.linesep),
-            "[BrokersWebSockets]",
-            "myid1 = myid1;8001;myhost1;10.10.100.1",
-            "myid2 = myid2;8002;myhost2;10.10.100.2{}".format(os.linesep)])
+        expected_data = os.linesep.join(
+            [
+                "[Certs]",
+                "BrokerCertChain = mycabundle.pem",
+                "CertFile = mycertfile.pem",
+                "PrivateKey = myprivatekey.pem",
+                f"{os.linesep}[Brokers]",
+                "myid1 = myid1;8001;myhost1;10.10.100.1",
+                f"myid2 = myid2;8002;myhost2;10.10.100.2{os.linesep}",
+                "[BrokersWebSockets]",
+                "myid1 = myid1;8001;myhost1;10.10.100.1",
+                f"myid2 = myid2;8002;myhost2;10.10.100.2{os.linesep}",
+            ]
+        )
+
         byte_stream = self.CapturedBytesIO()
         with patch.object(builtins, 'open',
                           return_value=byte_stream) as mock_open:
@@ -265,36 +269,44 @@ class DxlClientConfigTest(unittest.TestCase):
         mock_open.assert_called_with("myfile.txt", "wb")
 
     def test_write_modified_config(self):
-        initial_data = os.linesep.join([
-            "# mycerts",
-            "[Certs]",
-            "BrokerCertChain = abundle.crt",
-            "CertFile = acertfile.crt",
-            "# pk file",
-            "PrivateKey = akey.key",
-            "{}[Brokers]".format(os.linesep),
-            "# broker 7",
-            "myid7 = myid7;8007;myhost7;10.10.100.7",
-            "# broker 8",
-            "myid8 = myid8;8008;myhost8;10.10.100.8{}".format(os.linesep),
-            "[BrokersWebSockets]{}".format(os.linesep)])
+        initial_data = os.linesep.join(
+            [
+                "# mycerts",
+                "[Certs]",
+                "BrokerCertChain = abundle.crt",
+                "CertFile = acertfile.crt",
+                "# pk file",
+                "PrivateKey = akey.key",
+                f"{os.linesep}[Brokers]",
+                "# broker 7",
+                "myid7 = myid7;8007;myhost7;10.10.100.7",
+                "# broker 8",
+                f"myid8 = myid8;8008;myhost8;10.10.100.8{os.linesep}",
+                f"[BrokersWebSockets]{os.linesep}",
+            ]
+        )
 
-        expected_data_after_mods = os.linesep.join([
-            "# mycerts",
-            "[Certs]",
-            "BrokerCertChain = newbundle.pem",
-            "CertFile = acertfile.crt",
-            "# pk file",
-            "PrivateKey = newkey.pem",
-            "{}[Brokers]".format(os.linesep),
-            "# broker 8",
-            "myid8 = myid8;8008;myhost8;10.10.100.8",
-            "myid9 = myid9;8009;myhost9;10.10.100.9{}".format(os.linesep),
-            "[BrokersWebSockets]{}".format(os.linesep)])
+
+        expected_data_after_mods = os.linesep.join(
+            [
+                "# mycerts",
+                "[Certs]",
+                "BrokerCertChain = newbundle.pem",
+                "CertFile = acertfile.crt",
+                "# pk file",
+                "PrivateKey = newkey.pem",
+                f"{os.linesep}[Brokers]",
+                "# broker 8",
+                "myid8 = myid8;8008;myhost8;10.10.100.8",
+                f"myid9 = myid9;8009;myhost9;10.10.100.9{os.linesep}",
+                f"[BrokersWebSockets]{os.linesep}",
+            ]
+        )
+
 
         with patch.object(builtins, 'open',
                           return_value=io.BytesIO(initial_data.encode())), \
-                patch.object(os.path, 'isfile', return_value=True):
+                    patch.object(os.path, 'isfile', return_value=True):
             config = DxlClientConfig.create_dxl_config_from_file(
                 "mock_file.cfg")
         del config.brokers[0]
@@ -367,7 +379,10 @@ class DxlClientTest(unittest.TestCase):
         self.client._wait_for_policy_delay = 0
 
         broker = Broker(host_name='localhost')
-        broker._parse(UuidGenerator.generate_id_as_string() + ";9999;localhost;127.0.0.1")
+        broker._parse(
+            f"{UuidGenerator.generate_id_as_string()};9999;localhost;127.0.0.1"
+        )
+
 
         self.client.config.brokers = [broker]
         self.client.config.connect_retries = retries
@@ -530,14 +545,14 @@ class DxlClientTest(unittest.TestCase):
             service_type='/mcafee/service/unittest', client=self.client)
 
         # Add topics to the service
-        service_info.add_topic(channel + "1", RequestCallback())
-        service_info.add_topic(channel + "2", RequestCallback())
+        service_info.add_topic(f"{channel}1", RequestCallback())
+        service_info.add_topic(f"{channel}2", RequestCallback())
         service_info.add_topics({channel + str(i): RequestCallback()
                                  for i in range(3, 6)})
 
         subscriptions_before_registration = self.client.subscriptions
         expected_subscriptions_after_registration = \
-            sorted(subscriptions_before_registration +
+                sorted(subscriptions_before_registration +
                    tuple(channel + str(i) for i in range(1, 6)))
 
         # Register service in client
@@ -652,7 +667,7 @@ class DxlClientSystemClientTest(BaseClientTest):
         topic and send a new event, we should get that last one.
         """
         with self.create_client() as client:
-            test_topic = '/test/whatever/' + client.config._client_id
+            test_topic = f'/test/whatever/{client.config._client_id}'
             client.connect()
             self.assertTrue(client.connected)
 
@@ -686,7 +701,7 @@ class DxlClientSystemClientTest(BaseClientTest):
         and get a "unable to locate service" error response.
         """
         with self.create_client() as client:
-            test_topic = '/test/doesntexists/' + client.config._client_id
+            test_topic = f'/test/doesntexists/{client.config._client_id}'
             client.connect()
             self.assertTrue(client.connected)
 

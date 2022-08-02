@@ -34,7 +34,7 @@ def replace(file_path, pattern, subst):
     move(abs_path, file_path)
 
 VERSION = __import__('dxlclient').get_product_version()
-RELEASE_NAME = "dxlclient-python-sdk-" + str(VERSION)
+RELEASE_NAME = f"dxlclient-python-sdk-{str(VERSION)}"
 
 DIST_PY_FILE_LOCATION = os.path.dirname(os.path.realpath(__file__))
 DIST_DIRECTORY = os.path.join(DIST_PY_FILE_LOCATION, "dist")
@@ -54,12 +54,17 @@ os.makedirs(DIST_DIRECTORY)
 
 # Call Sphinx to create API doc
 print("\nCalling sphinx-apidoc\n")
-subprocess.check_call(["sphinx-apidoc",
-                       "--force",
-                       "--separate",
-                       "--no-toc",
-                       "--output-dir=" + DIST_DOCTMP_DIR,
-                       os.path.join(DIST_PY_FILE_LOCATION, "dxlclient")])
+subprocess.check_call(
+    [
+        "sphinx-apidoc",
+        "--force",
+        "--separate",
+        "--no-toc",
+        f"--output-dir={DIST_DOCTMP_DIR}",
+        os.path.join(DIST_PY_FILE_LOCATION, "dxlclient"),
+    ]
+)
+
 
 # Delete test files
 for f in os.listdir(DIST_DOCTMP_DIR):

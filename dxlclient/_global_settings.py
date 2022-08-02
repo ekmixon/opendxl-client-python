@@ -5,6 +5,7 @@
 
 """ Global configuration functions. """
 
+
 from __future__ import absolute_import
 import os
 
@@ -13,9 +14,9 @@ if os.name.lower() == "posix":
 else:
     PATH_CACHE = "./.{0}".format("dxlclient")
 
-PATH_CONFIG = PATH_CACHE + '/conf'
-PATH_KEYSTORE = PATH_CACHE + '/keystore'
-PATH_LOGS = PATH_CACHE + '/logs'
+PATH_CONFIG = f'{PATH_CACHE}/conf'
+PATH_KEYSTORE = f'{PATH_CACHE}/keystore'
+PATH_LOGS = f'{PATH_CACHE}/logs'
 
 FILE_CA_BUNDLE = "cabundle.pem"
 
@@ -23,7 +24,7 @@ FILE_CERT_PFX = "dxlcert.p12"
 FILE_CERT_PEM = "dxlcert.pem"
 FILE_DXL_PRIVATE_KEY = "dxlprivatekey.pem"
 
-FILE_CONFIG = PATH_CONFIG + '/config'
+FILE_CONFIG = f'{PATH_CONFIG}/config'
 
 
 def get_cache_dir():

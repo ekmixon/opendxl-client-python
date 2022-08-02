@@ -22,6 +22,6 @@ class BrokerRegistryQueryTest(BaseClientTest):
             response = client.sync_request(req)
 
             self.assertNotIsInstance(response, ErrorResponse)
-            print("## sourceBrokerGuid: " + str(response.source_broker_id))
-            print("## sourceClientGuid: " + str(response.source_client_id))
-            print(str(response.payload))
+            print(f"## sourceBrokerGuid: {str(response.source_broker_id)}")
+            print(f"## sourceClientGuid: {str(response.source_client_id)}")
+            print(response.payload)

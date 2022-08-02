@@ -120,13 +120,21 @@ class EventThroughputRunner(BaseClientTest):
                                 self.event_count += 1
                                 current_count = self.event_count
                                 if current_count == \
-                                        self.EVENT_COUNT * self.THREAD_COUNT:
+                                            self.EVENT_COUNT * self.THREAD_COUNT:
                                     self.event_count_condition.notify_all()
 
                                 if current_count % 100 == 0:
-                                    print(client.config._client_id + " : " +
-                                          str(current_count) + " : " +
-                                          event.payload.decode("utf8"))
+                                    print(
+                                        (
+                                            (
+                                                f"{client.config._client_id} : "
+                                                + str(current_count)
+                                            )
+                                            + " : "
+                                        )
+                                        + event.payload.decode("utf8")
+                                    )
+
 
                         # callback registration
                         callback = EventCallback()
@@ -140,11 +148,11 @@ class EventThroughputRunner(BaseClientTest):
                                 self.connect_condition.notify_all()
                             time_remaining = self.MAX_TIME
                             while self.atomic_connect_count != \
-                                    self.THREAD_COUNT and time_remaining > 0:
+                                        self.THREAD_COUNT and time_remaining > 0:
                                 self.connect_condition.wait(
                                     timeout=time_remaining)
                                 time_remaining = start - time.time() + \
-                                                 self.MAX_TIME
+                                                     self.MAX_TIME
                             self.assertEqual(
                                 self.THREAD_COUNT,
                                 self.atomic_connect_count,
@@ -154,25 +162,25 @@ class EventThroughputRunner(BaseClientTest):
                             if self.requests_start_time == 0:
                                 self.requests_start_time = time.time()
                                 self.connect_time = \
-                                    self.requests_start_time - \
-                                    self.connect_time_start
+                                        self.requests_start_time - \
+                                        self.connect_time_start
 
-                                for i in range(0, self.EVENT_COUNT):
+                                for i in range(self.EVENT_COUNT):
                                     event = Event(event_topic)
                                     if i % 10 == 0:
-                                        print("###send: " + str(i))
+                                        print(f"###send: {str(i)}")
                                     event.payload = str(i)
                                     send_client.send_event(event)
 
                         with self.event_count_condition:
                             time_remaining = self.MAX_TIME
                             while self.event_count != \
-                                    self.EVENT_COUNT * self.THREAD_COUNT and \
-                                    time_remaining > 0:
+                                        self.EVENT_COUNT * self.THREAD_COUNT and \
+                                        time_remaining > 0:
                                 self.event_count_condition.wait(
                                     timeout=time_remaining)
                                 time_remaining = start - time.time() + \
-                                                 self.MAX_TIME
+                                                     self.MAX_TIME
                             self.assertEqual(
                                 self.EVENT_COUNT * self.THREAD_COUNT,
                                 self.event_count,
@@ -190,11 +198,11 @@ class EventThroughputRunner(BaseClientTest):
             self.assertEqual(self.EVENT_COUNT * self.THREAD_COUNT, self.event_count)
 
             total_time = self.requests_end_time - self.requests_start_time
-            print("Connect time: " + str(self.connect_time))
-            print("Connect retries: " + str(self.connect_retries))
-            print("Total events: " + str(self.EVENT_COUNT))
-            print("Events/second: " + str(self.EVENT_COUNT / total_time))
-            print("Total events received: " + str(self.EVENT_COUNT * self.THREAD_COUNT))
+            print(f"Connect time: {str(self.connect_time)}")
+            print(f"Connect retries: {str(self.connect_retries)}")
+            print(f"Total events: {str(self.EVENT_COUNT)}")
+            print(f"Events/second: {str(self.EVENT_COUNT / total_time)}")
+            print(f"Total events received: {str(self.EVENT_COUNT * self.THREAD_COUNT)}")
             print("Total events received/second: " +
                   str((self.EVENT_COUNT * self.THREAD_COUNT) / total_time))
-            print("Elapsed time: " + str(total_time))
+            print(f"Elapsed time: {str(total_time)}")

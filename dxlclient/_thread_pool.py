@@ -35,7 +35,7 @@ class ThreadPoolWorker(Thread):
 
         self.tasks = tasks
         self.daemon = True
-        self.name = thread_prefix + "-" + UuidGenerator.generate_id_as_string()
+        self.name = f"{thread_prefix}-{UuidGenerator.generate_id_as_string()}"
         self.start()
 
     def __del__(self):

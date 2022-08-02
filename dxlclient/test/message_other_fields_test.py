@@ -43,8 +43,11 @@ class MessageOtherFieldsTest(BaseClientTest):
             client.add_event_callback(topic, event_callback)
 
             event = Event(destination_topic=topic)
-            event.other_fields = {"key" + str(i): "value" + str(i)
-                                  for i in range(self.OTHER_FIELDS_COUNT)}
+            event.other_fields = {
+                f"key{str(i)}": f"value{str(i)}"
+                for i in range(self.OTHER_FIELDS_COUNT)
+            }
+
             event.other_fields[b"key_as_bytes"] = b"val_as_bytes"
             client.send_event(event)
             # Bytes values for other field keys/values are expected to be
@@ -54,15 +57,17 @@ class MessageOtherFieldsTest(BaseClientTest):
             start = time.time()
             with self.event_received_condition:
                 while (time.time() - start < self.MAX_WAIT) and \
-                        not self.event_received:
+                            not self.event_received:
                     self.event_received_condition.wait(self.MAX_WAIT)
 
             self.assertIsNotNone(self.event_received)
             self.assertIsNotNone(self.event_received.other_fields)
             for i in range(self.OTHER_FIELDS_COUNT):
                 self.assertEqual(
-                    event.other_fields["key" + str(i)],
-                    self.event_received.other_fields.get("key" + str(i), ""))
+                    event.other_fields[f"key{str(i)}"],
+                    self.event_received.other_fields.get(f"key{str(i)}", ""),
+                )
+
             self.assertEqual(event.other_fields["key_as_bytes"],
                              self.event_received.other_fields.get(
                                  "key_as_bytes", ""))

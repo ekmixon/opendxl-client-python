@@ -63,7 +63,7 @@ def _get_brokers(broker_list_json):
     try:
         return _get_brokers_from_list(broker_list_json)
     except Exception as broker_error:
-        raise BrokerListError("Broker list is not a valid JSON: " + str(broker_error))
+        raise BrokerListError(f"Broker list is not a valid JSON: {str(broker_error)}")
 
 
 def _validate_proxy_address(address):
@@ -72,10 +72,15 @@ def _validate_proxy_address(address):
     :param address: HTTP proxy address
     """
     try:
-        if not (socket.gethostbyname(address) == address or socket.gethostbyname(address) != address):
+        if (
+            socket.gethostbyname(address) != address
+            and socket.gethostbyname(address) == address
+        ):
             raise socket.gaierror
     except socket.gaierror as proxy_address_error:
-        raise InvalidProxyConfigurationError("Proxy address is not valid: " + str(proxy_address_error))
+        raise InvalidProxyConfigurationError(
+            f"Proxy address is not valid: {str(proxy_address_error)}"
+        )
 
 
 def _validate_proxy_port(port):
@@ -227,10 +232,10 @@ class DxlClientConfig(_BaseObject):
         # Proxy settings
         self._proxy_type = None
         self._proxy_rdns = None
-        self._proxy_addr = proxy_args.get("proxy_addr", None)
-        self._proxy_port = proxy_args.get("proxy_port", None)
-        self._proxy_username = proxy_args.get("proxy_username", None)
-        self._proxy_password = proxy_args.get("proxy_password", None)
+        self._proxy_addr = proxy_args.get("proxy_addr")
+        self._proxy_port = proxy_args.get("proxy_port")
+        self._proxy_username = proxy_args.get("proxy_username")
+        self._proxy_password = proxy_args.get("proxy_password")
 
         # Common initialization which needs to be done whether an object is
         # created via :meth:`__init__` or :meth:`_init_from_config_file` is
@@ -274,16 +279,15 @@ class DxlClientConfig(_BaseObject):
             section_name, settings, section_required = section
             if section_required:
                 if section_name not in self._config or \
-                        self._config[section_name] is None:
-                    raise ValueError("{} not specified".format(section_name))
+                            self._config[section_name] is None:
+                    raise ValueError(f"{section_name} not specified")
                 for setting in settings:
                     setting_name, setting_description, setting_required = \
-                        setting
+                            setting
                     if setting_required and \
-                            (setting_name not in self._config[section_name] or
+                                (setting_name not in self._config[section_name] or
                              not self._config[section_name][setting_name]):
-                        raise ValueError("{} not specified".format(
-                            setting_description))
+                        raise ValueError(f"{setting_description} not specified")
 
     def _init_common(self):
         """
@@ -301,7 +305,7 @@ class DxlClientConfig(_BaseObject):
         self._keep_alive_interval = self._DEFAULT_MQTT_KEEP_ALIVE_INTERVAL
         # The reconnect back off multiplier
         self._reconnect_back_off_multiplier = \
-            self._DEFAULT_RECONNECT_BACK_OFF_MULTIPLIER
+                self._DEFAULT_RECONNECT_BACK_OFF_MULTIPLIER
         # The reconnect delay (in seconds)
         self._reconnect_delay = self._DEFAULT_RECONNECT_DELAY
         # The maximum reconnect delay
@@ -310,7 +314,7 @@ class DxlClientConfig(_BaseObject):
         self._reconnect_delay_random = self._DEFAULT_RECONNECT_DELAY_RANDOM
         # Whether to reconnect when disconnected
         self._reconnect_when_disconnected = \
-            self._DEFAULT_RECONNECT_WHEN_DISCONNECTED
+                self._DEFAULT_RECONNECT_WHEN_DISCONNECTED
 
         # The unique identifier of the client
         self._client_id = client_id
@@ -382,8 +386,9 @@ class DxlClientConfig(_BaseObject):
             if value_was_set:
                 break
         if not value_was_set:
-            raise ValueError("Unrecognized setting could not be set: {}".
-                             format(section_or_setting_name))
+            raise ValueError(
+                f"Unrecognized setting could not be set: {section_or_setting_name}"
+            )
 
     @property
     def broker_ca_bundle(self):
@@ -431,9 +436,7 @@ class DxlClientConfig(_BaseObject):
         :func:`dxlclient.client.DxlClient.connect` method, the :class:`dxlclient.client.DxlClient` will attempt to
         connect to the closest broker.
         """
-        if self.use_websockets:
-            return self.websocket_brokers
-        return self._brokers
+        return self.websocket_brokers if self.use_websockets else self._brokers
 
     @brokers.setter
     def brokers(self, brokers):
@@ -777,8 +780,7 @@ class DxlClientConfig(_BaseObject):
                     setting_name, _, setting_required = setting
                     if setting_required and self._get_value_from_config(
                             setting_name) is None:
-                        raise ValueError("{} was not defined in config file".
-                                         format(setting_name))
+                        raise ValueError(f"{setting_name} was not defined in config file")
 
     def _init_from_config_file(self, dxl_config_file):
         """
@@ -821,9 +823,9 @@ class DxlClientConfig(_BaseObject):
 
         self._init_common()
 
-        client_id_from_config = self._get_value_from_config(
-            self._CLIENT_ID_SETTING)
-        if client_id_from_config:
+        if client_id_from_config := self._get_value_from_config(
+            self._CLIENT_ID_SETTING
+        ):
             self._client_id = client_id_from_config
 
         if self._get_value_from_config(self._USE_WEBSOCKETS_SETTING):
@@ -909,8 +911,7 @@ class DxlClientConfig(_BaseObject):
             # on the `Broker` object, assign a random one as the key for the
             # broker config section so that the file can at least be persisted.
             for broker in brokers:
-                unique_id = broker.unique_id if broker.unique_id else \
-                    UuidGenerator.generate_id_as_string()
+                unique_id = broker.unique_id or UuidGenerator.generate_id_as_string()
                 brokers_for_config[unique_id] = broker._to_broker_string()
 
             # In order to attempt to preserve any comments that may have been
@@ -920,11 +921,12 @@ class DxlClientConfig(_BaseObject):
             current_brokers = self._get_value_from_config(
                 config_section)
             if current_brokers is not None:
-                brokers_to_delete = []
+                brokers_to_delete = [
+                    current_broker_key
+                    for current_broker_key in current_brokers.keys()
+                    if current_broker_key not in brokers_for_config
+                ]
 
-                for current_broker_key in current_brokers.keys():
-                    if current_broker_key not in brokers_for_config:
-                        brokers_to_delete.append(current_broker_key)
 
                 # `configobj` model entries not present in the brokers to be set
                 # are deleted - along with any associated comments.

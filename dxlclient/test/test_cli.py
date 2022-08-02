@@ -57,7 +57,7 @@ class _TempDir(object):
         self.delete_on_exit = delete_on_exit
 
     def __enter__(self):
-        self.dir = tempfile.mkdtemp(prefix="{}_".format(self.prefix))
+        self.dir = tempfile.mkdtemp(prefix=f"{self.prefix}_")
         return self.dir
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -80,10 +80,14 @@ class _CertificateRequest(object):
         names = None
 
         attributes = self.request["certification_request_info"]["attributes"]
-        extension_request = next((attribute for attribute in attributes
-                                  if attribute["type"].native ==
-                                  "extension_request"), None)
-        if extension_request:
+        if extension_request := next(
+            (
+                attribute
+                for attribute in attributes
+                if attribute["type"].native == "extension_request"
+            ),
+            None,
+        ):
             san_extension = None
             for extensions in extension_request["values"]:
                 san_extension = next(
@@ -222,20 +226,18 @@ class CliTest(unittest.TestCase):
             file_prefix = "client"
             client_args = [value]
 
-        with _TempDir("gencsr_basic") as temp_dir, \
-                patch("sys.argv", command_args(["generatecsr", temp_dir]
-                                               + client_args)):
+        with _TempDir("gencsr_basic") as temp_dir, patch("sys.argv", command_args(["generatecsr", temp_dir]
+                                                   + client_args)):
             cli_run()
 
             # Validate csr was created properly
-            csr_file = os.path.join(temp_dir, "{}.csr".format(file_prefix))
+            csr_file = os.path.join(temp_dir, f"{file_prefix}.csr")
             self.assertTrue(os.path.exists(csr_file))
             request = _CertificateRequest(csr_file)
             self.assertDictEqual({"common_name": common_name}, request.subject)
 
             # Validate private key was created properly
-            private_key_file = os.path.join(temp_dir, "{}.key".format(
-                file_prefix))
+            private_key_file = os.path.join(temp_dir, f"{file_prefix}.key")
             self.assertTrue(os.path.exists(private_key_file))
             key = _PrivateKey(private_key_file)
             self.assertEqual("rsa", key.algorithm)
@@ -306,20 +308,26 @@ class CliTest(unittest.TestCase):
     def test_generatecsr_with_encrypted_private_key_and_passphrase_prompt(self):
         passphrase = "itsasecret"
 
-        responses = ['', passphrase + "nomatch1", passphrase + "nomatch2",
-                     passphrase, passphrase]
+        responses = [
+            '',
+            f"{passphrase}nomatch1",
+            f"{passphrase}nomatch2",
+            passphrase,
+            passphrase,
+        ]
+
         response_count = [-1]
         def prompt_response(_):
             response_count[0] += 1
             return responses[response_count[0]]
 
         with _TempDir("gencsr_enc_pk_pass_prompt") as temp_dir,\
-                patch("sys.argv", command_args(["generatecsr",
+                    patch("sys.argv", command_args(["generatecsr",
                                                 temp_dir,
                                                 "myclient",
                                                 "-P"])), \
-                patch.object(builtins, 'print') as mock_print, \
-                patch.object(getpass, "getpass",
+                    patch.object(builtins, 'print') as mock_print, \
+                    patch.object(getpass, "getpass",
                              side_effect=prompt_response) as mock_getpass:
             cli_run()
 
@@ -364,14 +372,12 @@ class CliTest(unittest.TestCase):
             file_prefix = "client"
             client_args = [value]
 
-        with _TempDir("provconfig_basic") as temp_dir, \
-                patch("sys.argv", command_args(["provisionconfig",
-                                                temp_dir,
-                                                "myhost"]
-                                               + client_args
-                                               + ["-u", "myuser",
-                                                  "-p", "mypass"])),\
-                requests_mock.mock(case_sensitive=True) as req_mock:
+        with _TempDir("provconfig_basic") as temp_dir, patch("sys.argv", command_args(["provisionconfig",
+                                                    temp_dir,
+                                                    "myhost"]
+                                                   + client_args
+                                                   + ["-u", "myuser",
+                                                      "-p", "mypass"])), requests_mock.mock(case_sensitive=True) as req_mock:
             ca_bundle_for_response = make_fake_ca_bundle()
             client_cert_for_response = FAKE_CERTIFICATE
             brokers_for_response = make_broker_lines()
@@ -385,14 +391,13 @@ class CliTest(unittest.TestCase):
             cli_run()
 
             # Validate csr was created properly
-            csr_file = os.path.join(temp_dir, "{}.csr".format(file_prefix))
+            csr_file = os.path.join(temp_dir, f"{file_prefix}.csr")
             self.assertTrue(os.path.exists(csr_file))
             request = _CertificateRequest(csr_file)
             self.assertDictEqual({"common_name": common_name}, request.subject)
 
             # Validate private key was created properly
-            private_key_file = os.path.join(temp_dir, "{}.key".format(
-                file_prefix))
+            private_key_file = os.path.join(temp_dir, f"{file_prefix}.key")
             self.assertTrue(os.path.exists(private_key_file))
             key = _PrivateKey(private_key_file)
             self.assertEqual("rsa", key.algorithm)
@@ -420,8 +425,7 @@ class CliTest(unittest.TestCase):
                              ca_bundle_from_file)
 
             # Validate client cert returned for request matches stored file
-            client_cert_file = os.path.join(temp_dir, "{}.crt".format(
-                file_prefix))
+            client_cert_file = os.path.join(temp_dir, f"{file_prefix}.crt")
             self.assertTrue(os.path.exists(client_cert_file))
             client_cert_from_file = slurp_file_into_bytes(client_cert_file)
             self.assertEqual(client_cert_for_response.encode("utf8"),
@@ -441,7 +445,7 @@ class CliTest(unittest.TestCase):
     def test_provisionconfig_with_csr(self):
         csr_file = "myclient.csr"
         with _TempDir("provconfig_csr") as temp_dir, \
-                patch("sys.argv", command_args(["provisionconfig",
+                    patch("sys.argv", command_args(["provisionconfig",
                                                 temp_dir,
                                                 "myhost",
                                                 os.path.join(temp_dir,
@@ -449,7 +453,7 @@ class CliTest(unittest.TestCase):
                                                 "-u", "myuser",
                                                 "-p", "mypass",
                                                 "-r"])), \
-                requests_mock.mock(case_sensitive=True) as req_mock:
+                    requests_mock.mock(case_sensitive=True) as req_mock:
             client_cert_for_response = FAKE_CERTIFICATE
             csr_to_test = FAKE_CSR
             full_csr_file_path = os.path.join(temp_dir, csr_file)
@@ -532,13 +536,11 @@ class CliTest(unittest.TestCase):
 
 
     def test_updateconfig_basic(self):
-        with _TempDir("updateconfig_basic") as temp_dir, \
-                patch("sys.argv", command_args(["updateconfig",
-                                                temp_dir,
-                                                "myhost",
-                                                "-u", "myuser",
-                                                "-p", "mypass"])), \
-                requests_mock.mock(case_sensitive=True) as req_mock:
+        with _TempDir("updateconfig_basic") as temp_dir, patch("sys.argv", command_args(["updateconfig",
+                                                    temp_dir,
+                                                    "myhost",
+                                                    "-u", "myuser",
+                                                    "-p", "mypass"])), requests_mock.mock(case_sensitive=True) as req_mock:
             base_broker_lines = broker_lines_for_config_file(
                 make_broker_lines(2), add_comments=True)
             base_config_lines = make_basic_config(
@@ -559,8 +561,8 @@ class CliTest(unittest.TestCase):
             updated_brokers["webSocketBrokers"] = updated_brokers["brokers"]
             expected_brokers = make_broker_lines(4)
             del expected_brokers[0]
-            expected_broker_lines = "# This is broker 2\n{}".format(
-                broker_lines_for_config_file(expected_brokers))
+            expected_broker_lines = f"# This is broker 2\n{broker_lines_for_config_file(expected_brokers)}"
+
             expected_config_content = make_config(base_config_lines,
                                                   expected_broker_lines,
                                                   add_general=False)
@@ -602,15 +604,13 @@ class CliTest(unittest.TestCase):
             self.assertEqual(expected_config_content, config_from_file)
 
     def test_updateconfig_with_trusted_ca_cert_and_port(self):
-        with _TempDir("updateconfig_ca_port") as temp_dir, \
-                patch("sys.argv", command_args(["updateconfig",
-                                                temp_dir,
-                                                "myhost",
-                                                "-t", "58443",
-                                                "-u", "myuser",
-                                                "-p", "mypass",
-                                                "-e", "mytruststore.pem"])), \
-                requests_mock.mock(case_sensitive=True) as req_mock:
+        with _TempDir("updateconfig_ca_port") as temp_dir, patch("sys.argv", command_args(["updateconfig",
+                                                    temp_dir,
+                                                    "myhost",
+                                                    "-t", "58443",
+                                                    "-u", "myuser",
+                                                    "-p", "mypass",
+                                                    "-e", "mytruststore.pem"])), requests_mock.mock(case_sensitive=True) as req_mock:
             ca_bundle_file = os.path.join(temp_dir, "ca-bundle.crt")
             DxlUtils.save_to_file(ca_bundle_file, "old ca")
 
@@ -631,11 +631,10 @@ class CliTest(unittest.TestCase):
             request_urls = []
             for request in req_mock.request_history:
                 self.assertEqual("mytruststore.pem", request.verify)
-                request_urls.append("{}://{}:{}{}".format(
-                    request.scheme,
-                    request.hostname,
-                    request.port,
-                    request.path))
+                request_urls.append(
+                    f"{request.scheme}://{request.hostname}:{request.port}{request.path}"
+                )
+
 
             # If each mock endpoint was hit once, the request should have been
             # made to the right port
@@ -688,72 +687,76 @@ def slurp_file_into_bytes(filename):
 
 
 def get_server_provision_url(host, port=8443):
-    return "https://{}:{}/remote/{}".format(
-        host, port,
-        "DxlBrokerMgmt.generateOpenDXLClientProvisioningPackageCmd")
+    return f"https://{host}:{port}/remote/DxlBrokerMgmt.generateOpenDXLClientProvisioningPackageCmd"
 
 
 def get_server_client_ca_url(host, port=8443):
-    return "https://{}:{}/remote/DxlClientMgmt.createClientCaBundle".format(
-        host, port)
+    return f"https://{host}:{port}/remote/DxlClientMgmt.createClientCaBundle"
 
 
 def get_server_broker_list_url(host, port=8443):
-    return "https://{}:{}/remote/DxlClientMgmt.getBrokerList".format(
-        host, port)
+    return f"https://{host}:{port}/remote/DxlClientMgmt.getBrokerList"
 
 
 def make_broker_lines(brokers=3):
     broker_lines = []
     for i in range(1, brokers+1):
         broker_id = "{{{}}}".format(uuid.UUID(int=i))
-        broker_value = ";".join((broker_id,
-                                 "888{}".format(i),
-                                 "broker{}".format(i),
-                                 "10.10.100.{}".format(i)))
+        broker_value = ";".join((broker_id, f"888{i}", f"broker{i}", f"10.10.100.{i}"))
         broker_lines.append((broker_id, broker_value))
     return broker_lines
 
 
 def make_broker_dict(brokers=3):
     return {
-        "brokers": [{"guid": "{{{}}}".format(uuid.UUID(int=i)),
-                     "hostName": "broker{}".format(i),
-                     "ipAddress": "10.10.100.{}".format(i),
-                     "port": "888{}".format(i)}
-                    for i in range(1, brokers+1)],
+        "brokers": [
+            {
+                "guid": "{{{}}}".format(uuid.UUID(int=i)),
+                "hostName": f"broker{i}",
+                "ipAddress": f"10.10.100.{i}",
+                "port": f"888{i}",
+            }
+            for i in range(1, brokers + 1)
+        ],
         "certVersion": 0,
-        "webSocketBrokers": [{"guid": "{{{}}}".format(uuid.UUID(int=i)),
-                              "hostName": "broker{}".format(i),
-                              "ipAddress": "10.10.100.{}".format(i),
-                              "port": "888{}".format(i)}
-                             for i in range(1, brokers + 1)],
+        "webSocketBrokers": [
+            {
+                "guid": "{{{}}}".format(uuid.UUID(int=i)),
+                "hostName": f"broker{i}",
+                "ipAddress": f"10.10.100.{i}",
+                "port": f"888{i}",
+            }
+            for i in range(1, brokers + 1)
+        ],
     }
 
 
 def make_basic_config(client_prefix="client",
                       ca_bundle_file="ca-bundle.crt",
                       add_comments=False):
-    if add_comments:
-        config = ["[General]",
-                  "#UseWebSockets = False\n",
-                  "[Certs]",
-                  "# Truststore client uses to validate broker",
-                  "BrokerCertChain = {}".format(ca_bundle_file),
-                  "# Client's certificate",
-                  "CertFile = {}.crt".format(client_prefix),
-                  "# Client's private key",
-                  "PrivateKey = {}.key".format(client_prefix),
-                  "\n# Brokers client could connect to",
-                  "[Brokers]",
-                 ]
-    else:
-        config = ["[Certs]",
-                  "BrokerCertChain = {}".format(ca_bundle_file),
-                  "CertFile = {}.crt".format(client_prefix),
-                  "PrivateKey = {}.key".format(client_prefix),
-                  "\n[Brokers]"]
-    return config
+    return (
+        [
+            "[General]",
+            "#UseWebSockets = False\n",
+            "[Certs]",
+            "# Truststore client uses to validate broker",
+            f"BrokerCertChain = {ca_bundle_file}",
+            "# Client's certificate",
+            f"CertFile = {client_prefix}.crt",
+            "# Client's private key",
+            f"PrivateKey = {client_prefix}.key",
+            "\n# Brokers client could connect to",
+            "[Brokers]",
+        ]
+        if add_comments
+        else [
+            "[Certs]",
+            f"BrokerCertChain = {ca_bundle_file}",
+            f"CertFile = {client_prefix}.crt",
+            f"PrivateKey = {client_prefix}.key",
+            "\n[Brokers]",
+        ]
+    )
 
 
 def make_config(basic_config_lines=None, broker_lines=None, add_general=True):
@@ -785,8 +788,7 @@ def flattened_broker_lines(broker_lines,
 
     for i, broker_line in enumerate(broker_lines):
         if add_comments:
-            lines_with_kv_pairs_flattened.append(
-                "# This is broker {}".format(i+1))
+            lines_with_kv_pairs_flattened.append(f"# This is broker {i + 1}")
         lines_with_kv_pairs_flattened.append(
             key_value_separator.join(broker_line))
 
@@ -849,7 +851,4 @@ def get_mock_broker_list_response_func(brokers=None):
 
 
 def flattened_query_params(request):
-    query_params = {}
-    for key, value in request.qs.items():
-        query_params[key] = ",".join(value)
-    return query_params
+    return {key: ",".join(value) for key, value in request.qs.items()}

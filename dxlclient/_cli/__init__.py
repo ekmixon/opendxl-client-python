@@ -85,10 +85,11 @@ def _get_log_formatter(verbosity_level):
     :return: the log formatter string
     :rtype: str
     """
-    formatter = "%(levelname)s: %(message)s"
-    if verbosity_level >= 3:
-        formatter = "%(levelname)s: %(name)s: %(message)s"
-    return formatter
+    return (
+        "%(levelname)s: %(name)s: %(message)s"
+        if verbosity_level >= 3
+        else "%(levelname)s: %(message)s"
+    )
 
 
 def cli_run():

@@ -127,7 +127,7 @@ class BrokerServiceRegistryTest(BaseClientTest):
                 with request_lock:
                     request_received_count[0] += 1
                     if request.service_id and \
-                            (request.service_id != callback_service_id):
+                                (request.service_id != callback_service_id):
                         request_to_wrong_service_id_count[0] += 1
                     if request.service_id in requests_by_service:
                         requests_by_service[request.service_id] += 1
@@ -141,7 +141,7 @@ class BrokerServiceRegistryTest(BaseClientTest):
                                                    "round_robin_service")
                 callback = RequestCallback()
                 callback.on_request = \
-                    lambda request: my_request(reg_info.service_id, request)
+                        lambda request: my_request(reg_info.service_id, request)
                 reg_info.add_topic(topic, callback)
                 service_client.register_service_sync(reg_info,
                                                      self.DEFAULT_TIMEOUT)
@@ -151,7 +151,7 @@ class BrokerServiceRegistryTest(BaseClientTest):
                          for _ in range(service_count)]
             with self.create_client() as request_client:
                 request_client.connect()
-                for _ in range(0, request_to_send_count):
+                for _ in range(request_to_send_count):
                     request = Request(topic)
                     response = request_client.sync_request(
                         request, timeout=self.RESPONSE_WAIT)
@@ -239,7 +239,7 @@ class BrokerServiceRegistryTest(BaseClientTest):
                 with request_lock:
                     request_received_count[0] += 1
                     if request.service_id and \
-                            (request.service_id != callback_service_id):
+                                (request.service_id != callback_service_id):
                         request_to_wrong_service_id_count[0] += 1
                     if request.service_id in requests_by_service:
                         requests_by_service[request.service_id] += 1
@@ -253,7 +253,7 @@ class BrokerServiceRegistryTest(BaseClientTest):
                     service_client, "registry_specified_service_id_test")
                 callback = RequestCallback()
                 callback.on_request = \
-                    lambda request: my_request(reg_info.service_id, request)
+                        lambda request: my_request(reg_info.service_id, request)
                 reg_info.add_topic(topic, callback)
                 service_client.register_service_sync(reg_info,
                                                      self.DEFAULT_TIMEOUT)
@@ -263,7 +263,7 @@ class BrokerServiceRegistryTest(BaseClientTest):
                          for _ in range(service_count)]
             with self.create_client() as request_client:
                 request_client.connect()
-                for _ in range(0, request_count):
+                for _ in range(request_count):
                     request = Request(topic)
                     request.service_id = reg_infos[0].service_id
                     response = request_client.sync_request(
@@ -304,7 +304,7 @@ class BrokerServiceRegistryTest(BaseClientTest):
             reg_info.add_topic(topic, callback)
             with self.create_client() as request_client:
                 request_client.connect()
-                for _ in range(0, service_registration_count):
+                for _ in range(service_registration_count):
                     service_client.register_service_sync(reg_info,
                                                          self.DEFAULT_TIMEOUT)
                     request = Request(topic)
